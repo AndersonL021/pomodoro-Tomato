@@ -1,4 +1,5 @@
-# pomodoro
+# pomodoro-tomato
 
-Um site pomodoro para me ajudar no foco e produtividade.\
-Aplicação construída para me auxiliar no estudo de conceitos básicos de React.js
+Um sistema pomodoro baseado em React.js - by Lindagd
+- Esse projeto tem o intuito de ajudar no foco e estudo focado no método pomodoro, aplicando novas funcionalidades (Caso necessário) e adicionando novo design.
+- Adicionar ao projeto a stack Angular.ts.a
