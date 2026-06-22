@@ -1,4 +1,5 @@
-<div class="page" [style.--page-bg]="fundoUrl">
+<div class="page">
+  <img class="page-bg" [src]="fundoImagem" alt="" aria-hidden="true" />
   <header class="top-bar">
     <h1 class="brand">{{ titulo }}</h1>
 
@@ -169,7 +170,7 @@
     </div>
   </nav>
 
-  <audio #audio src="hora-do-café.wav" preload="auto"></audio>
+  <audio #audio src="hora-do-cafe.wav" preload="auto"></audio>
 
   <div class="alarmMessage" *ngIf="alarmeAtivo">
     <i class="fa-solid fa-bell"></i>

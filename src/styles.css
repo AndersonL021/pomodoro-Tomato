@@ -39,15 +39,15 @@ app-root {
   overflow: hidden;
 }
 
-.page::before {
-  content: "";
+.page-bg {
   position: fixed;
   inset: 0;
-  background-image: var(--page-bg);
-  background-position: 50% 28%;
-  background-size: cover;
-  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 28%;
   z-index: 0;
+  pointer-events: none;
 }
 
 .page::after {

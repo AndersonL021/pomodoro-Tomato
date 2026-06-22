@@ -1,5 +1,4 @@
-import { APP_BASE_HREF } from '@angular/common';
-import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +12,7 @@ export class AppComponent implements OnInit, OnDestroy {
   menuAberto = false;
   anotacoesAbertas = false;
   textoAnotacoes = '';
+  fundoImagem = '';
   rodadas = [0];
   segundos = 1500;
   relogioAtivo = false;
@@ -53,14 +53,10 @@ export class AppComponent implements OnInit, OnDestroy {
   @ViewChild('audio', { static: true })
   referenciaAudio!: ElementRef<HTMLAudioElement>;
 
-  constructor(@Inject(APP_BASE_HREF) private readonly baseHref: string) {}
-
-  get fundoUrl(): string {
-    const base = this.baseHref.endsWith('/') ? this.baseHref : `${this.baseHref}/`;
-    return `url('${base}elden2.jpg')`;
-  }
-
   ngOnInit(): void {
+    const base = document.querySelector('base')?.href ?? '/';
+    this.fundoImagem = `${base}elden2.jpg`;
+
     this.horarioAtualIntervaloId = window.setInterval(() => {
       this.horarioAtual = new Date();
     }, 1000);
