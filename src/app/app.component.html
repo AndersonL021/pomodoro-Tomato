@@ -44,6 +44,14 @@
   <div class="menu-backdrop" [class.visible]="menuAberto" (click)="fecharMenu()"></div>
 
   <nav class="side-menu" [class.open]="menuAberto">
+    <button
+      class="menu-close"
+      type="button"
+      aria-label="Fechar menu"
+      (click)="fecharMenu()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
     <div class="menu-section">
       <h3>Controles</h3>
       <div class="menu-actions">
