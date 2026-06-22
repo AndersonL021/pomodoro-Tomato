@@ -3,9 +3,27 @@
     <h1 class="brand">{{ titulo }}</h1>
 
     <div class="stats">
-      <span class="stat"><strong>{{ totalPomodoros }}</strong> pomodoros</span>
-      <span class="stat"><strong>{{ totalDescansos }}</strong> descansos</span>
-      <span class="stat"><strong>{{ totalDescansosLongos }}</strong> longo descansos</span>
+      <button
+        class="stat stat-btn"
+        type="button"
+        [class.active]="modoAtual === 'pomodoro'"
+        (click)="selecionarModo('pomodoro')">
+        <strong>{{ totalPomodoros }}</strong> pomodoros
+      </button>
+      <button
+        class="stat stat-btn"
+        type="button"
+        [class.active]="modoAtual === 'descanso'"
+        (click)="selecionarModo('descanso')">
+        <strong>{{ totalDescansos }}</strong> descansos
+      </button>
+      <button
+        class="stat stat-btn"
+        type="button"
+        [class.active]="modoAtual === 'longo'"
+        (click)="selecionarModo('longo')">
+        <strong>{{ totalDescansosLongos }}</strong> longo descansos
+      </button>
     </div>
 
     <button
@@ -21,15 +39,73 @@
   </header>
 
   <main class="timer-area">
-    <p class="status-hint" [class.active]="relogioAtivo">{{ statusTexto }}</p>
-    <div
-      class="timer"
-      [class.active]="relogioAtivo"
-      (click)="alternarRelogio()"
-      title="Clique para iniciar ou pausar">
+    <div class="status-header" [class.active]="relogioAtivo || alarmeAtivo">
+      <div class="status-ornament" aria-hidden="true">
+        <span class="ornament-line ornament-line--left"></span>
+        <svg class="ornament-star" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M10 1.5 L11.4 7.2 L17 8.5 L11.4 9.8 L10 15.5 L8.6 9.8 L3 8.5 L8.6 7.2 Z"
+            stroke="currentColor"
+            stroke-width="0.85"
+            stroke-linejoin="round"/>
+        </svg>
+        <span class="ornament-line ornament-line--right"></span>
+      </div>
+      <p class="status-hint">{{ statusTexto }}</p>
+    </div>
+
+    <div class="timer" [class.active]="relogioAtivo">
       {{ tempoRestante }}
     </div>
-    <p class="session-info">Sessão {{ sessaoAtualNumero }} de {{ sessoesPorRodada }}</p>
+
+    <div class="session-block">
+      <p class="session-info">{{ textoSessao }}</p>
+      <div class="session-dots" *ngIf="modoAtual === 'pomodoro'">
+        <span
+          class="dot"
+          *ngFor="let s of sessoes; let i = index"
+          [class.filled]="i < sessoesConcluidasNaRodada"
+          [class.current]="i === sessoesConcluidasNaRodada && relogioAtivo">
+        </span>
+      </div>
+    </div>
+
+    <div class="timer-actions">
+      <button class="btn-start" type="button" (click)="alternarRelogio()">
+        <i [ngClass]="relogioAtivo ? 'fa-solid fa-pause' : 'fa-solid fa-play'"></i>
+        {{ textoBotaoPrincipal }}
+      </button>
+
+      <div class="timer-actions-secondary">
+        <a
+          class="btn-spotify"
+          href="https://open.spotify.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Abrir Spotify">
+          <i class="fa-brands fa-spotify"></i>
+          <span>Spotify</span>
+        </a>
+        <button
+          class="btn-annotations"
+          type="button"
+          [class.active]="anotacoesAbertas"
+          (click)="alternarAnotacoes()">
+          <i class="fa-solid fa-pen"></i>
+          <span>Anotações</span>
+        </button>
+      </div>
+
+      <div class="annotations-panel" *ngIf="anotacoesAbertas">
+        <textarea
+          class="annotations-field"
+          rows="3"
+          placeholder="Write your notes..."
+          [value]="textoAnotacoes"
+          (input)="atualizarAnotacoes($event)">
+        </textarea>
+      </div>
+    </div>
   </main>
 
   <footer class="quote-bar">
@@ -97,7 +173,7 @@
 
   <div class="alarmMessage" *ngIf="alarmeAtivo">
     <i class="fa-solid fa-bell"></i>
-    <p>Fim da sessão de foco!</p>
+    <p>{{ mensagemAlarme }}</p>
     <button type="button" (click)="pararAlarme()">Parar alarme</button>
   </div>
 </div>

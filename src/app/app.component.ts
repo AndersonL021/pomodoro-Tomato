@@ -10,14 +10,25 @@ export class AppComponent implements OnInit, OnDestroy {
   horarioAtual = new Date();
   alarmeAtivo = false;
   menuAberto = false;
+  anotacoesAbertas = false;
+  textoAnotacoes = '';
   rodadas = [0];
   segundos = 1500;
   relogioAtivo = false;
   indiceCitacao = 0;
+  modoAtual: 'pomodoro' | 'descanso' | 'longo' = 'pomodoro';
+  contadorPomodoros = 0;
+  contadorDescansos = 0;
+  contadorDescansosLongos = 0;
   readonly sessoesPorRodada = 4;
-  readonly duracaoSessao = 1500;
   private relogioIntervaloId: number | null = null;
   private horarioAtualIntervaloId: number | null = null;
+
+  private readonly duracoes = {
+    pomodoro: 25 * 60,
+    descanso: 5 * 60,
+    longo: 20 * 60,
+  } as const;
 
   readonly citacoes = [
     /*'Mergulhe. No aprendizado e na lembrança.',
@@ -94,31 +105,67 @@ export class AppComponent implements OnInit, OnDestroy {
     return Array.from({ length: this.sessoesPorRodada }, (_, i) => i);
   }
 
+  get duracaoAtual(): number {
+    return this.duracoes[this.modoAtual];
+  }
+
   get totalPomodoros(): number {
-    const rodadasAnteriores = this.rodadas.slice(0, -1).reduce((acc, r) => acc + r, 0);
-    return rodadasAnteriores + this.sessoesConcluidasNaRodada;
+    return this.contadorPomodoros;
   }
 
   get totalDescansos(): number {
-    if (this.totalPomodoros === 0) return 0;
-    const descansosLongos = this.totalDescansosLongos;
-    return this.totalPomodoros - descansosLongos;
+    return this.contadorDescansos;
   }
 
   get totalDescansosLongos(): number {
-    return this.rodadas.length - 1;
+    return this.contadorDescansosLongos;
   }
 
   get statusTexto(): string {
-    if (this.alarmeAtivo) return 'Hora da pausa';
-    if (this.relogioAtivo) return 'Foco ativo';
-    if (this.segundos < this.duracaoSessao) return 'Sessão pausada';
+    if (this.alarmeAtivo) {
+      if (this.modoAtual === 'pomodoro') return 'Hora da pausa';
+      return 'Tempo esgotado';
+    }
+    if (this.relogioAtivo) {
+      if (this.modoAtual === 'pomodoro') return 'Foco ativo';
+      if (this.modoAtual === 'descanso') return 'Descanso ativo';
+      return 'Descanso longo ativo';
+    }
+    if (this.segundos < this.duracaoAtual) return 'Sessão pausada';
     return 'Pronto para iniciar';
   }
 
   get proximaPausaMinutos(): number {
     const aposEstaSessao = this.sessoesConcluidasNaRodada + 1;
-    return aposEstaSessao === this.sessoesPorRodada ? 15 : 5;
+    return aposEstaSessao === this.sessoesPorRodada ? 20 : 5;
+  }
+
+  get mensagemAlarme(): string {
+    if (this.modoAtual === 'pomodoro') return 'Fim da sessão de foco!';
+    if (this.modoAtual === 'descanso') return 'Fim do descanso curto!';
+    return 'Fim do descanso longo!';
+  }
+
+  get textoSessao(): string {
+    if (this.modoAtual === 'pomodoro') {
+      return `Sessão ${this.sessaoAtualNumero} de ${this.sessoesPorRodada} • Foco por 25 min`;
+    }
+    if (this.modoAtual === 'descanso') {
+      return 'Descanso curto • 5 min';
+    }
+    return 'Descanso longo • 20 min';
+  }
+
+  get textoBotaoPrincipal(): string {
+    return this.relogioAtivo ? 'PAUSAR SESSÃO' : 'INICIAR SESSÃO';
+  }
+
+  selecionarModo(modo: 'pomodoro' | 'descanso' | 'longo'): void {
+    this.relogioAtivo = false;
+    this.limparRelogio();
+    this.modoAtual = modo;
+    this.segundos = this.duracaoAtual;
+    this.alarmeAtivo = false;
   }
 
   alternarMenu(): void {
@@ -131,6 +178,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
   proximaCitacao(): void {
     this.indiceCitacao = (this.indiceCitacao + 1) % this.citacoes.length;
+  }
+
+  alternarAnotacoes(): void {
+    this.anotacoesAbertas = !this.anotacoesAbertas;
+  }
+
+  atualizarAnotacoes(evento: Event): void {
+    this.textoAnotacoes = (evento.target as HTMLTextAreaElement).value;
   }
 
   alternarRelogio(): void {
@@ -146,7 +201,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   reiniciarRelogio(): void {
     this.relogioAtivo = false;
-    this.segundos = 1500;
+    this.segundos = this.duracaoAtual;
     this.limparRelogio();
   }
 
@@ -175,7 +230,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
 
       if (this.segundos === 0) {
-        this.atualizarRodadas();
+        this.registrarConclusao();
         this.tocarAlarme();
         this.reiniciarRelogio();
       }
@@ -186,6 +241,21 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.relogioIntervaloId !== null) {
       clearInterval(this.relogioIntervaloId);
       this.relogioIntervaloId = null;
+    }
+  }
+
+  private registrarConclusao(): void {
+    switch (this.modoAtual) {
+      case 'pomodoro':
+        this.contadorPomodoros += 1;
+        this.atualizarRodadas();
+        break;
+      case 'descanso':
+        this.contadorDescansos += 1;
+        break;
+      case 'longo':
+        this.contadorDescansosLongos += 1;
+        break;
     }
   }
 
