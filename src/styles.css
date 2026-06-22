@@ -43,7 +43,10 @@ app-root {
   content: "";
   position: fixed;
   inset: 0;
-  background: url("/elden2.jpg") 50% 28% / cover no-repeat;
+  background-image: var(--page-bg);
+  background-position: 50% 28%;
+  background-size: cover;
+  background-repeat: no-repeat;
   z-index: 0;
 }
 
