@@ -12,3 +12,7 @@ A pomodoro system based on React.js - by Lindagd
 - has been a good a idea put a button redirection to spotify or another app of music 
 - Make something for registers your histori and your production, maybe a conection with bd or google planilhs (Arono write planilhs)
 - Think about another things
+
+# Enjoy
+
+- URL: https://andersonl021.github.io/pomodoro-Tomato/
