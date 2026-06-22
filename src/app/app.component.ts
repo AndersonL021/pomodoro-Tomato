@@ -7,16 +7,36 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 })
 export class AppComponent implements OnInit, OnDestroy {
   titulo = 'pomodoro.';
-  tagline = 'foco, pausa e produtividade';
   horarioAtual = new Date();
   alarmeAtivo = false;
+  menuAberto = false;
   rodadas = [0];
   segundos = 1500;
   relogioAtivo = false;
+  indiceCitacao = 0;
   readonly sessoesPorRodada = 4;
   readonly duracaoSessao = 1500;
   private relogioIntervaloId: number | null = null;
   private horarioAtualIntervaloId: number | null = null;
+
+  readonly citacoes = [
+    /*'Mergulhe. No aprendizado e na lembrança.',
+    'Experiência é o nome que damos aos nossos erros.',
+    'As respostas estão na orientação da graça',
+    'A persistência é o caminho do êxito.',
+    'O foco é a arte de saber o que ignorar.',
+    'O chamado da graça há muito tempo perdida fala com todos nós.',
+    'Grandes feitos exigem grande determinação.',
+    'Cada sessão é um passo em direção à maestria.',
+    */'Dive. Into learning and remembrance.',
+    'Experience is the name we give our mistakes.',
+    'The answers lie in the guidance of grace.',
+    'Persistence is the path to success.',
+    'Focus is the art of knowing what to ignore.',
+    'The long-lost call of grace speaks to us all.',
+    'Great deeds require great determination.',
+    'Each session is a step toward mastery.',
+  ];
 
   @ViewChild('audio', { static: true })
   referenciaAudio!: ElementRef<HTMLAudioElement>;
@@ -32,6 +52,10 @@ export class AppComponent implements OnInit, OnDestroy {
       clearInterval(this.horarioAtualIntervaloId);
     }
     this.limparRelogio();
+  }
+
+  get citacaoAtual(): string {
+    return this.citacoes[this.indiceCitacao];
   }
 
   get minutos(): number {
@@ -70,8 +94,19 @@ export class AppComponent implements OnInit, OnDestroy {
     return Array.from({ length: this.sessoesPorRodada }, (_, i) => i);
   }
 
-  get progressoGraus(): number {
-    return ((this.duracaoSessao - this.segundos) / this.duracaoSessao) * 360;
+  get totalPomodoros(): number {
+    const rodadasAnteriores = this.rodadas.slice(0, -1).reduce((acc, r) => acc + r, 0);
+    return rodadasAnteriores + this.sessoesConcluidasNaRodada;
+  }
+
+  get totalDescansos(): number {
+    if (this.totalPomodoros === 0) return 0;
+    const descansosLongos = this.totalDescansosLongos;
+    return this.totalPomodoros - descansosLongos;
+  }
+
+  get totalDescansosLongos(): number {
+    return this.rodadas.length - 1;
   }
 
   get statusTexto(): string {
@@ -84,6 +119,18 @@ export class AppComponent implements OnInit, OnDestroy {
   get proximaPausaMinutos(): number {
     const aposEstaSessao = this.sessoesConcluidasNaRodada + 1;
     return aposEstaSessao === this.sessoesPorRodada ? 15 : 5;
+  }
+
+  alternarMenu(): void {
+    this.menuAberto = !this.menuAberto;
+  }
+
+  fecharMenu(): void {
+    this.menuAberto = false;
+  }
+
+  proximaCitacao(): void {
+    this.indiceCitacao = (this.indiceCitacao + 1) % this.citacoes.length;
   }
 
   alternarRelogio(): void {

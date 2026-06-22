@@ -1,96 +1,95 @@
-<div class="content">
-  <header class="titleBlock">
-    <div class="brand">
-      <h1 class="title">
-        <span class="icon-tomato" aria-hidden="true">🍅</span>{{ titulo }}
-      </h1>
-      <p class="tagline">{{ tagline }}</p>
+<div class="page">
+  <header class="top-bar">
+    <h1 class="brand">{{ titulo }}</h1>
+
+    <div class="stats">
+      <span class="stat"><strong>{{ totalPomodoros }}</strong> pomodoros</span>
+      <span class="stat"><strong>{{ totalDescansos }}</strong> descansos</span>
+      <span class="stat"><strong>{{ totalDescansosLongos }}</strong> longo descansos</span>
     </div>
-    <div class="subtitle">
-      <button class="test-alarm" type="button" (click)="testarAlarme()">
-        <i class="fa-solid fa-volume-high"></i> Testar alarme
-      </button>
-      <span class="badge" [class.active]="relogioAtivo" [class.alarm]="alarmeAtivo">
-        <i class="fa-solid fa-circle"></i> {{ statusTexto }}
-      </span>
-      <p class="hour">{{ horaFormatada }} <span class="icon-cup" aria-hidden="true">☕</span></p>
-      <p class="date">{{ dataFormatada }}</p>
-    </div>
+
+    <button
+      class="menu-btn"
+      [class.open]="menuAberto"
+      type="button"
+      aria-label="Menu"
+      (click)="alternarMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </header>
 
-  <main class="app">
-    <section class="pomodoro">
-      <p class="statusLabel" [class.active]="relogioAtivo">{{ statusTexto }}</p>
-      <div class="clock"
-           [class.active]="relogioAtivo"
-           [style.--progresso]="progressoGraus + 'deg'">
-        <div class="clock-inner">
-          <p class="timeLeft">{{ tempoRestante }}</p>
-          <p class="sessionLabel">Sessão {{ sessaoAtualNumero }} de {{ sessoesPorRodada }}</p>
-        </div>
-      </div>
+  <main class="timer-area">
+    <p class="status-hint" [class.active]="relogioAtivo">{{ statusTexto }}</p>
+    <div
+      class="timer"
+      [class.active]="relogioAtivo"
+      (click)="alternarRelogio()"
+      title="Clique para iniciar ou pausar">
+      {{ tempoRestante }}
+    </div>
+    <p class="session-info">Sessão {{ sessaoAtualNumero }} de {{ sessoesPorRodada }}</p>
+  </main>
 
-      <div class="clockButtons">
-        <button class="btn-primary" (click)="alternarRelogio()">
+  <footer class="quote-bar">
+    <div class="quote-box">
+      <p>"{{ citacaoAtual }}"</p>
+    </div>
+    <button class="quote-next" type="button" aria-label="Próxima citação" (click)="proximaCitacao()">
+      ···
+    </button>
+  </footer>
+
+  <div class="menu-backdrop" [class.visible]="menuAberto" (click)="fecharMenu()"></div>
+
+  <nav class="side-menu" [class.open]="menuAberto">
+    <div class="menu-section">
+      <h3>Controles</h3>
+      <div class="menu-actions">
+        <button class="btn-primary" type="button" (click)="alternarRelogio()">
           <i [ngClass]="relogioAtivo ? 'fa-solid fa-pause' : 'fa-solid fa-play'"></i>
           {{ relogioAtivo ? 'Pausar foco' : 'Iniciar foco' }}
         </button>
-        <button class="btn-secondary" (click)="reiniciarRelogio()">
+        <button class="btn-secondary" type="button" (click)="reiniciarRelogio()">
           <i class="fa-solid fa-rotate-left"></i> Reiniciar sessão
         </button>
+        <button class="btn-secondary" type="button" (click)="testarAlarme()">
+          <i class="fa-solid fa-volume-high"></i> Testar alarme
+        </button>
       </div>
-    </section>
+    </div>
 
-    <aside class="rounds">
-      <div class="rounds-header">
-        <p class="round">Rodada {{ rodadas.length }} <span>· {{ sessoesPorRodada }} sessões</span></p>
-        <div class="dots">
-          <span class="dot"
-                *ngFor="let s of sessoes; let i = index"
-                [class.filled]="i < sessoesConcluidasNaRodada"
-                [class.current]="i === sessoesConcluidasNaRodada && relogioAtivo"></span>
-        </div>
+    <div class="menu-section">
+      <h3>Rodada {{ rodadas.length }}</h3>
+      <div class="dots">
+        <span
+          class="dot"
+          *ngFor="let s of sessoes; let i = index"
+          [class.filled]="i < sessoesConcluidasNaRodada"
+          [class.current]="i === sessoesConcluidasNaRodada && relogioAtivo">
+        </span>
       </div>
+    </div>
 
-      <p class="description">
-        Você está em uma sessão de foco de 25 minutos. Mantenha sua atenção na tarefa
-        e evite interrupções. Ao finalizar, uma pausa curta será liberada para você descansar,
-        tomar um café, ouvir uma ou duas músicas e recarregar a energia.
-      </p>
+    <div class="menu-section menu-info">
+      <p>Próxima pausa: <strong>{{ proximaPausaMinutos }} min</strong></p>
+      <p>{{ horaFormatada }} · {{ dataFormatada }}</p>
+    </div>
 
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="icon-tomato" aria-hidden="true">🍅</span>
-          <div>
-            <p class="info-label">Sessão atual</p>
-            <p class="info-value">{{ sessaoAtualNumero }} de {{ sessoesPorRodada }}</p>
-          </div>
-        </div>
-        <div class="info-item">
-          <span class="icon-cup" aria-hidden="true">☕</span>
-          <div>
-            <p class="info-label">Próxima pausa</p>
-            <p class="info-value">{{ proximaPausaMinutos }} minutos</p>
-          </div>
-        </div>
+    <div class="menu-section" *ngIf="rodadas.length > 1 || sessoesConcluidasNaRodada > 0">
+      <h3>Cafés do dia</h3>
+      <div class="coffees" *ngFor="let quantidade of rodadas">
+        <span *ngFor="let item of criarArray(quantidade)">☕</span>
       </div>
+    </div>
+  </nav>
 
-      <div class="coffees-list" *ngIf="rodadas.length > 1 || sessoesConcluidasNaRodada > 0">
-        <p class="info-label">Cafés do dia</p>
-        <div class="coffees-rows">
-          <div class="coffees" *ngFor="let quantidade of rodadas">
-            <span class="icon-cup" aria-hidden="true" *ngFor="let item of criarArray(quantidade)">☕</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <audio #audio src="hora-do-café.wav" preload="auto"></audio>
-  </main>
+  <audio #audio src="hora-do-café.wav" preload="auto"></audio>
 
   <div class="alarmMessage" *ngIf="alarmeAtivo">
     <i class="fa-solid fa-bell"></i>
     <p>Fim da sessão de foco!</p>
-    <button (click)="pararAlarme()">Parar alarme</button>
+    <button type="button" (click)="pararAlarme()">Parar alarme</button>
   </div>
 </div>
