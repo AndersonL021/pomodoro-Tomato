@@ -275,7 +275,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.rodadas = rodadasAtualizadas;
   }
 
-  private readonly volumeAlarme = 0.3;
+  private readonly volumeAlarme = 1;
 
   private tocarAlarme(): void {
     if (this.referenciaAudio?.nativeElement) {
