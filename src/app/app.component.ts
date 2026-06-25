@@ -177,12 +177,12 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   selecionarModo(modo: 'pomodoro' | 'descanso' | 'longo'): void {
+    this.pararAlarme();
     this.relogioAtivo = false;
     this.fimEmTimestamp = null;
     this.limparRelogio();
     this.modoAtual = modo;
     this.segundos = this.duracaoAtual;
-    this.alarmeAtivo = false;
   }
 
   alternarMenu(): void {
@@ -229,8 +229,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   pararAlarme(): void {
     if (this.referenciaAudio?.nativeElement) {
-      this.referenciaAudio.nativeElement.pause();
-      this.referenciaAudio.nativeElement.currentTime = 0;
+      const audio = this.referenciaAudio.nativeElement;
+      audio.loop = false;
+      audio.pause();
+      audio.currentTime = 0;
     }
     this.alarmeAtivo = false;
   }
@@ -371,9 +373,17 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private readonly volumeAlarme = 1;
 
+  private readonly sonsAlarme: Record<'pomodoro' | 'descanso' | 'longo', string> = {
+    pomodoro: 'MARGOTT COFFEE.mp3',
+    descanso: 'BREAK_5-MIN.mp3',
+    longo: 'BREAK_25-MIN.mp3',
+  };
+
   private tocarAlarme(): void {
     if (this.referenciaAudio?.nativeElement) {
       const audio = this.referenciaAudio.nativeElement;
+      audio.src = this.sonsAlarme[this.modoAtual];
+      audio.loop = true;
       audio.volume = this.volumeAlarme;
       audio.currentTime = 0;
       void audio.play().catch(() => undefined);
