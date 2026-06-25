@@ -23,8 +23,10 @@ export class AppComponent implements OnInit, OnDestroy {
   contadorDescansosLongos = 0;
   readonly sessoesPorRodada = 4;
   private relogioIntervaloId: number | null = null;
+  private relogioTimeoutId: number | null = null;
   private horarioAtualIntervaloId: number | null = null;
   private fimEmTimestamp: number | null = null;
+  private finalizandoSessao = false;
   private readonly aoMudarVisibilidade = (): void => {
     if (!document.hidden && this.relogioAtivo) {
       this.atualizarTempoRestante();
@@ -213,6 +215,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     this.relogioAtivo = true;
+    void this.solicitarPermissaoNotificacao();
     this.fimEmTimestamp = Date.now() + this.segundos * 1000;
     this.iniciarRelogio();
   }
@@ -242,10 +245,24 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private iniciarRelogio(): void {
     this.limparRelogio();
+    this.agendarFimSessao();
 
     this.relogioIntervaloId = window.setInterval(() => {
       this.atualizarTempoRestante();
     }, 250);
+  }
+
+  private agendarFimSessao(): void {
+    if (this.fimEmTimestamp === null) {
+      return;
+    }
+
+    const restanteMs = Math.max(0, this.fimEmTimestamp - Date.now());
+
+    this.relogioTimeoutId = window.setTimeout(() => {
+      this.relogioTimeoutId = null;
+      this.atualizarTempoRestante();
+    }, restanteMs);
   }
 
   private sincronizarSegundosRestantes(): void {
@@ -265,20 +282,63 @@ export class AppComponent implements OnInit, OnDestroy {
     const restante = Math.ceil((this.fimEmTimestamp - Date.now()) / 1000);
 
     if (restante <= 0) {
-      this.segundos = 0;
-      this.registrarConclusao();
-      this.tocarAlarme();
-      this.reiniciarRelogio();
+      this.finalizarSessao();
       return;
     }
 
     this.segundos = restante;
   }
 
+  private finalizarSessao(): void {
+    if (this.finalizandoSessao) {
+      return;
+    }
+
+    this.finalizandoSessao = true;
+    this.segundos = 0;
+    this.registrarConclusao();
+    this.tocarAlarme();
+    this.enviarNotificacaoSessao();
+    this.reiniciarRelogio();
+    this.finalizandoSessao = false;
+  }
+
+  private async solicitarPermissaoNotificacao(): Promise<void> {
+    if (!('Notification' in window) || Notification.permission !== 'default') {
+      return;
+    }
+
+    await Notification.requestPermission();
+  }
+
+  private enviarNotificacaoSessao(): void {
+    if (!('Notification' in window) || Notification.permission !== 'granted') {
+      return;
+    }
+
+    const base = document.querySelector('base')?.href ?? '/';
+    const notificacao = new Notification('pomodoro.', {
+      body: this.mensagemAlarme,
+      icon: `${base}favicon-192.png`,
+      tag: 'pomodoro-alarme',
+      requireInteraction: true,
+    });
+
+    notificacao.onclick = () => {
+      window.focus();
+      notificacao.close();
+    };
+  }
+
   private limparRelogio(): void {
     if (this.relogioIntervaloId !== null) {
       clearInterval(this.relogioIntervaloId);
       this.relogioIntervaloId = null;
+    }
+
+    if (this.relogioTimeoutId !== null) {
+      clearTimeout(this.relogioTimeoutId);
+      this.relogioTimeoutId = null;
     }
   }
 
@@ -313,8 +373,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private tocarAlarme(): void {
     if (this.referenciaAudio?.nativeElement) {
-      this.referenciaAudio.nativeElement.volume = this.volumeAlarme;
-      this.referenciaAudio.nativeElement.play();
+      const audio = this.referenciaAudio.nativeElement;
+      audio.volume = this.volumeAlarme;
+      audio.currentTime = 0;
+      void audio.play().catch(() => undefined);
       this.alarmeAtivo = true;
     }
   }
