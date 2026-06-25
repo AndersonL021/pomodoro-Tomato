@@ -24,6 +24,12 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly sessoesPorRodada = 4;
   private relogioIntervaloId: number | null = null;
   private horarioAtualIntervaloId: number | null = null;
+  private fimEmTimestamp: number | null = null;
+  private readonly aoMudarVisibilidade = (): void => {
+    if (!document.hidden && this.relogioAtivo) {
+      this.atualizarTempoRestante();
+    }
+  };
 
   private readonly duracoes = {
     pomodoro: 25 * 60,
@@ -60,9 +66,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.horarioAtualIntervaloId = window.setInterval(() => {
       this.horarioAtual = new Date();
     }, 1000);
+
+    document.addEventListener('visibilitychange', this.aoMudarVisibilidade);
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('visibilitychange', this.aoMudarVisibilidade);
+
     if (this.horarioAtualIntervaloId !== null) {
       clearInterval(this.horarioAtualIntervaloId);
     }
@@ -166,6 +176,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   selecionarModo(modo: 'pomodoro' | 'descanso' | 'longo'): void {
     this.relogioAtivo = false;
+    this.fimEmTimestamp = null;
     this.limparRelogio();
     this.modoAtual = modo;
     this.segundos = this.duracaoAtual;
@@ -194,18 +205,22 @@ export class AppComponent implements OnInit, OnDestroy {
 
   alternarRelogio(): void {
     if (this.relogioAtivo) {
+      this.sincronizarSegundosRestantes();
       this.relogioAtivo = false;
+      this.fimEmTimestamp = null;
       this.limparRelogio();
       return;
     }
 
     this.relogioAtivo = true;
+    this.fimEmTimestamp = Date.now() + this.segundos * 1000;
     this.iniciarRelogio();
   }
 
   reiniciarRelogio(): void {
     this.relogioAtivo = false;
     this.segundos = this.duracaoAtual;
+    this.fimEmTimestamp = null;
     this.limparRelogio();
   }
 
@@ -229,16 +244,35 @@ export class AppComponent implements OnInit, OnDestroy {
     this.limparRelogio();
 
     this.relogioIntervaloId = window.setInterval(() => {
-      if (this.segundos > 0) {
-        this.segundos -= 1;
-      }
+      this.atualizarTempoRestante();
+    }, 250);
+  }
 
-      if (this.segundos === 0) {
-        this.registrarConclusao();
-        this.tocarAlarme();
-        this.reiniciarRelogio();
-      }
-    }, 1000);
+  private sincronizarSegundosRestantes(): void {
+    if (this.fimEmTimestamp === null) {
+      return;
+    }
+
+    const restante = Math.ceil((this.fimEmTimestamp - Date.now()) / 1000);
+    this.segundos = Math.max(0, restante);
+  }
+
+  private atualizarTempoRestante(): void {
+    if (this.fimEmTimestamp === null) {
+      return;
+    }
+
+    const restante = Math.ceil((this.fimEmTimestamp - Date.now()) / 1000);
+
+    if (restante <= 0) {
+      this.segundos = 0;
+      this.registrarConclusao();
+      this.tocarAlarme();
+      this.reiniciarRelogio();
+      return;
+    }
+
+    this.segundos = restante;
   }
 
   private limparRelogio(): void {
